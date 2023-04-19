@@ -1,0 +1,7 @@
+numpy
+pandas
+plotly
+gymnasium
+streamlit
+comet_ml
+pytest
