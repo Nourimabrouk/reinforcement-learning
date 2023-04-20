@@ -144,7 +144,7 @@ def display_agent_environment():
 def display_interactive_environment(agent, environment):
     st.header("Interactive Environment Visualization")
 
-    experiment = create_comet_experiment()
+    experiment = initialise_experiment()
     experiment.log_parameter("Agent", str(agent))
     experiment.log_parameter("Environment", str(environment))
 

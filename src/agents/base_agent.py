@@ -15,3 +15,4 @@ class BaseAgent:
 
     def load(self, filepath):
         raise NotImplementedError
+    

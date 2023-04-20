@@ -12,3 +12,17 @@ While running demonstrations, testing, or training agents, display a progress ba
 
 Documentation:
 Consider adding more detailed descriptions of each agent and environment in the "Agent and Environment Descriptions" section. You can create separate markdown files for each agent and environment and load them dynamically based on user selections.
+
+Add a visualization of the agent's training progress in the Interactive Environment page. This can include episode rewards over time, steps taken, and other relevant metrics.
+
+Implement a method to save and load trained agents, allowing users to resume training or use pre-trained agents in the Interactive Environment.
+
+Allow users to modify agent hyperparameters and environment settings before running a demonstration or starting the Interactive Environment.
+
+Integrate more reinforcement learning algorithms and environments to provide a broader range of learning experiences.
+
+Add an advanced mode for experienced users, where they can modify the agent's code or create their own agents and environments directly in the app.
+
+Provide detailed explanations and visualizations of the inner workings of each reinforcement learning algorithm, such as Q-tables and policy networks.
+
+Implement a leaderboard feature that allows users to compare the performance of their agents against others.
