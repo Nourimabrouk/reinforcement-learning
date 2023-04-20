@@ -5,6 +5,7 @@ from src.agents.random_agent import RandomAgent
 from PIL import Image
 import gymnasium as gym
 import gymnasium.wrappers as gw
+import time
 
 import subprocess
 import inspect
@@ -32,19 +33,14 @@ def log_episode(experiment, episode, metrics, video_frames):
         images = [Image.fromarray(frame) for frame in video_frames]
         experiment.log_images(images, name="episode_video", step=episode)
 
-
-def selector(run_all=False):
-    # Lets the user select from available demos, and runs the selected demo(s).
-    # Make sure the selector can handle other demo_xxx() functions
-
+def selector():
     # Get a list of all the demo functions in the current module
     members = inspect.getmembers(sys.modules[__name__])
     demo_funcs = [func for name, func in members if callable(func) and name.startswith("demo_")]
     demo_names = [func.__name__[5:].capitalize() for func in demo_funcs]
 
-    # If run_all is True, add an extra option to run all available demos
-    if run_all:
-        demo_names.insert(0, "All")
+    # Add "Run all demos" to the beginning of the list
+    demo_names.insert(0, "Run all demos")
 
     print("Choose your demo:")
 
@@ -64,13 +60,16 @@ def selector(run_all=False):
         # Print options with selection indicator
         for i, name in enumerate(demo_names):
             prefix = "  " if i != selected_index else "->"
-            print(f"{prefix} {i+1}. {name}")
+            print(f"{prefix} {i}. {name}")
+
         # Wait for arrow key input
         event = keyboard.read_event()
         if event.name == "down":
             selected_index = (selected_index + 1) % len(demo_names)
+            time.sleep(0.1)
         elif event.name == "up":
             selected_index = (selected_index - 1) % len(demo_names)
+            time.sleep(0.1)
         elif event.name == "enter":
             # Run selected demo(s)
             if selected_index == 0:
@@ -86,10 +85,6 @@ def selector(run_all=False):
                         print(f"Demo {demo_names[i+1]} failed with error: {e}")
                         success = False
                         break
-                if success:
-                    print("All demonstrations completed successfully.")
-                else:
-                    print("Some demonstrations failed.")
             else:
                 # Run selected demo
                 func = demo_funcs[selected_index - 1]
@@ -106,7 +101,6 @@ def selector(run_all=False):
             return None
 
 
-        
 def demo_tests():
     
     # Demonstrates the functionality and commands assosiated with the tests
