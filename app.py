@@ -64,7 +64,7 @@ def display_testing():
     # Then run pytest programmatically and display the test results.
 
     # List available test files
-    test_files = [f for f in os.listdir("tests") if f.startswith("test_") and f.endswith(".py")]
+    test_files = [f for f in os.listdir("src/tests") if f.startswith("test_") and f.endswith(".py")]
 
     # Create a multiselect widget for users to select test files
     selected_test_files = st.multiselect("Select test files to run:", test_files)
@@ -129,8 +129,11 @@ def create_agent_environment(agent_name, env_name):
     agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
     environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
 
-    agent_instance = agent_module.Agent()  # Replace with the specific agent class constructor
-    environment_instance = environment_module.Environment()  # Replace with the specific environment class constructor
+    agent_class = getattr(agent_module, agent_name)  # Get the agent class
+    environment_class = getattr(environment_module, env_name)  # Get the environment class
+
+    agent_instance = agent_class()  # Create an agent instance
+    environment_instance = environment_class()  # Create an environment instance
 
     return agent_instance, environment_instance
 
@@ -139,12 +142,12 @@ def display_agent_environment():
 
     agent_names = ["RandomAgent", "QLearningAgent"]  # replace with actual list of agent names
     env_names = ["CustomEnvironment1", "CustomEnvironment2"]  # replace with actual list of environment names
+    
     agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
     environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
 
     agent_class = getattr(agent_module, agent_name)  # Get the agent class
     environment_class = getattr(environment_module, env_name)  # Get the environment class
-
 
     agent_name = st.sidebar.selectbox("Select an agent:", agent_names)
     env_name = st.sidebar.selectbox("Select an environment:", env_names)
