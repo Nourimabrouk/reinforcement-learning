@@ -1,0 +1,19 @@
+import pytest
+from src.environments.gridworld_env import GridWorld
+
+@pytest.fixture
+def custom_env():
+    return GridWorld()
+
+def test_reset(custom_env):
+    state = custom_env.reset()
+    assert state.shape == (5, 5)
+
+def test_step(custom_env):
+    state = custom_env.reset()
+    action = custom_env.action_space.sample()
+    
+    observation, reward, terminated, truncated, info = custom_env.step(action)
+    assert observation.shape == (5, 5)
+    assert isinstance(reward, float)
+    assert isinstance(done, bool)

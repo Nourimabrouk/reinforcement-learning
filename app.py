@@ -7,6 +7,7 @@ import io
 import sys
 from src.utils import demonstrations
 import altair as alt
+from src.integration import comet
 
 def main():
     st.set_page_config(layout="wide")
@@ -82,12 +83,15 @@ def display_testing():
         test_results = stdout_capture.getvalue()
         st.write("```\n" + test_results + "\n```")
 
+@st.cache
+def load_app_text():
+    with open(os.path.join("src", "integration", "descriptions.md"), "r") as f:
+        app_text = f.read()
+    return app_text
+
 def display_descriptions():
     st.header("Agent and Environment Descriptions")
-    # Load the text from app_text.md
-    with open(os.path.join("src", "integration", "app_text.md"), "r") as f:
-        app_text = f.read()
-    # Display the text as formatted Markdown
+    app_text = load_app_text()
     st.markdown(app_text)
 
 def display_demonstrations():
@@ -116,29 +120,56 @@ def display_demonstrations():
         # Display the output in the Streamlit app
         st.text(output.getvalue())
 
-def display_agent_environment():
-    st.header("Select an agent and an environment")
-    
-    agent_names = ["RandomAgent", "QLearningAgent"]  # replace with actual list of agent names
-    
-    env_names = ["CustomEnvironment1", "CustomEnvironment2"]  # replace with actual list of environment names
-    
-    agent_name = st.sidebar.selectbox("Select an agent:", agent_names)
-    env_name = st.sidebar.selectbox("Select an environment:", env_names)
-    
+def create_agent_environment(agent_name, env_name):
     agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
     environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
-    
+
     agent_instance = agent_module.Agent()  # Replace with the specific agent class constructor
     environment_instance = environment_module.Environment()  # Replace with the specific environment class constructor
-    
+
+    return agent_instance, environment_instance
+
+def display_agent_environment():
+    st.header("Select an agent and an environment")
+
+    agent_names = ["RandomAgent", "QLearningAgent"]  # replace with actual list of agent names
+    env_names = ["CustomEnvironment1", "CustomEnvironment2"]  # replace with actual list of environment names
+
+    agent_name = st.sidebar.selectbox("Select an agent:", agent_names)
+    env_name = st.sidebar.selectbox("Select an environment:", env_names)
+
+    agent_instance, environment_instance = create_agent_environment(agent_name, env_name)
     display_interactive_environment(agent_instance, environment_instance)
 
 def display_interactive_environment(agent, environment):
     st.header("Interactive Environment Visualization")
-    
+
+    experiment = create_comet_experiment()
+    experiment.log_parameter("Agent", str(agent))
+    experiment.log_parameter("Environment", str(environment))
+
     agent.set_environment(environment)
-    agent.train()
+    for episode in range(environment.num_episodes):
+        state = environment.reset()
+        episode_reward = 0
+
+        for step in range(environment.max_steps_per_episode):
+            action = agent.choose_action(state)
+            next_state, reward, truncated, terminated, info = environment.step(action)
+            done = truncated or terminated
+            episode_reward += reward
+
+            agent.learn((next_state, reward, truncated, terminated, info))
+
+            if done:
+                break
+
+            state = next_state
+
+        experiment.log_metric("Episode Reward", episode_reward, step=episode)
+
+    experiment.end()
+
     environment.render_interactive()
 
 def display_gallery():

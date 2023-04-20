@@ -95,7 +95,8 @@ def demo_custom_env():
 
         while not done:
             action = agent.choose_action(state)
-            next_state, reward, done, info = env.step(action)
+            observation, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
             state = next_state
             total_reward += reward
 

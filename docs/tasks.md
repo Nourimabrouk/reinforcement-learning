@@ -1,7 +1,6 @@
-Setup app
 Setup comet_ml
+Test ql_agent
 
-Use included agents
-Select from included environments
+
 
 
