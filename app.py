@@ -70,7 +70,11 @@ def display_testing():
     selected_test_files = st.multiselect("Select test files to run:", test_files)
 
     # Create a button to run the selected tests
+        # Create a button to run the selected tests
     if st.button("Run tests"):
+        if not selected_test_files:
+            st.warning("No test files selected.")
+            return
         # Capture the standard output to display test results
         stdout_capture = io.StringIO()
         sys.stdout = stdout_capture
@@ -119,20 +123,8 @@ def display_demonstrations():
 
         # Display the output in the Streamlit app
         st.text(output.getvalue())
-        
-    if st.button("Run demonstration"):
-        # ...
 
-        # Display the output in the Streamlit app
-        st.text(output.getvalue())
-
-        # Display the video
-        video_file = open('./videos/openaigym.video.0.{}.video000000.mp4'.format(os.getpid()), 'rb')
-        video_bytes = video_file.read()
-        st.video(video_bytes)
-
-        # ...
-
+@st.cache(allow_output_mutation=True)
 def create_agent_environment(agent_name, env_name):
     agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
     environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
@@ -147,6 +139,12 @@ def display_agent_environment():
 
     agent_names = ["RandomAgent", "QLearningAgent"]  # replace with actual list of agent names
     env_names = ["CustomEnvironment1", "CustomEnvironment2"]  # replace with actual list of environment names
+    agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
+    environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
+
+    agent_class = getattr(agent_module, agent_name)  # Get the agent class
+    environment_class = getattr(environment_module, env_name)  # Get the environment class
+
 
     agent_name = st.sidebar.selectbox("Select an agent:", agent_names)
     env_name = st.sidebar.selectbox("Select an environment:", env_names)
@@ -157,7 +155,7 @@ def display_agent_environment():
 def display_interactive_environment(agent, environment):
     st.header("Interactive Environment Visualization")
 
-    experiment = initialise_experiment()
+    experiment = comet.initialise_experiment()
     experiment.log_parameter("Agent", str(agent))
     experiment.log_parameter("Environment", str(environment))
 
