@@ -1,4 +1,5 @@
 reinforcement-learning
+    app.py
     main.py
     docs
     src
@@ -23,7 +24,6 @@ reinforcement-learning
             gpt_functions.py
             reinforcement-learning
         integration
-            app.py
             comet_ml.py
             __init__.py
         tests

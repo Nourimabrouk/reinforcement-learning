@@ -8,9 +8,6 @@ sys.path.append(os.path.abspath("src"))
 from src.utils import demonstrations
 
 def main():
-
-
-#    demonstrations.demo_gym()
     demonstrations.selector()
     return
 
