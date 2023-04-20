@@ -8,6 +8,9 @@ import sys
 from src.utils import demonstrations
 import altair as alt
 from src.integration import comet
+from src.agents.random_agent import RandomAgent
+from src.agents.ql_agent import QLearningAgent
+import numpy
 
 def main():
     st.set_page_config(layout="wide")
@@ -59,28 +62,34 @@ def display_home():
 
 def display_testing():
     st.header("Testing Page")
-    # Provide interactive testing environment using pytests
-    # You will need to create interactive widgets for users to select the test files or specific tests to run.
-    # Then run pytest programmatically and display the test results.
 
     # List available test files
-    test_files = [f for f in os.listdir("src/tests") if f.startswith("test_") and f.endswith(".py")]
+    test_files = [f for f in os.listdir("tests") if f.startswith("test_") and f.endswith(".py")]
 
-    # Create a multiselect widget for users to select test files
-    selected_test_files = st.multiselect("Select test files to run:", test_files)
+    # Create a radio button for users to choose between running all tests or specific tests
+    test_option = st.radio("Choose a testing option:", ["Run all tests", "Run specific tests"])
+
+    # Create a multiselect widget for users to select test files if they chose "Run specific tests"
+    if test_option == "Run specific tests":
+        selected_test_files = st.multiselect("Select test files to run:", test_files)
+    else:
+        selected_test_files = test_files
 
     # Create a button to run the selected tests
-        # Create a button to run the selected tests
     if st.button("Run tests"):
         if not selected_test_files:
             st.warning("No test files selected.")
             return
+
         # Capture the standard output to display test results
         stdout_capture = io.StringIO()
         sys.stdout = stdout_capture
 
+        # Add the full path to the test files
+        full_test_file_paths = [os.path.join("tests", test_file) for test_file in selected_test_files]
+
         # Run pytest programmatically
-        pytest.main(selected_test_files)
+        pytest.main(full_test_file_paths)
 
         # Restore the standard output and display test results
         sys.stdout = sys.__stdout__
@@ -126,28 +135,20 @@ def display_demonstrations():
 
 @st.cache(allow_output_mutation=True)
 def create_agent_environment(agent_name, env_name):
-    agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
-    environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
+    if agent_name == "RandomAgent":
+        agent_instance = RandomAgent()
+    elif agent_name == "QLearningAgent":
+        agent_instance = QLearningAgent()
 
-    agent_class = getattr(agent_module, agent_name)  # Get the agent class
-    environment_class = getattr(environment_module, env_name)  # Get the environment class
-
-    agent_instance = agent_class()  # Create an agent instance
-    environment_instance = environment_class()  # Create an environment instance
+    environment_instance = gym.make(env_name)
 
     return agent_instance, environment_instance
 
 def display_agent_environment():
     st.header("Select an agent and an environment")
 
-    agent_names = ["RandomAgent", "QLearningAgent"]  # replace with actual list of agent names
-    env_names = ["CustomEnvironment1", "CustomEnvironment2"]  # replace with actual list of environment names
-    
-    agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
-    environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
-
-    agent_class = getattr(agent_module, agent_name)  # Get the agent class
-    environment_class = getattr(environment_module, env_name)  # Get the environment class
+    agent_names = ["RandomAgent", "QLearningAgent"]
+    env_names = ["LunarLander-v2", "CartPole-v1"]
 
     agent_name = st.sidebar.selectbox("Select an agent:", agent_names)
     env_name = st.sidebar.selectbox("Select an environment:", env_names)
