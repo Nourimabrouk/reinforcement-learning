@@ -2,11 +2,13 @@ import pytest
 import tempfile
 import os
 
+import sys
+sys.path.append('src')
+
 import plotly.graph_objs as go
 from comet_ml import Experiment
 from comet_ml import ExistingExperiment
 from plotly.graph_objects import Figure
-
 from src.integration.comet import (
     initialize_experiment,
     log_hyperparameters,

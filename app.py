@@ -119,6 +119,19 @@ def display_demonstrations():
 
         # Display the output in the Streamlit app
         st.text(output.getvalue())
+        
+    if st.button("Run demonstration"):
+        # ...
+
+        # Display the output in the Streamlit app
+        st.text(output.getvalue())
+
+        # Display the video
+        video_file = open('./videos/openaigym.video.0.{}.video000000.mp4'.format(os.getpid()), 'rb')
+        video_bytes = video_file.read()
+        st.video(video_bytes)
+
+        # ...
 
 def create_agent_environment(agent_name, env_name):
     agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")

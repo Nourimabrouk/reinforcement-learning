@@ -1,7 +1,18 @@
+import os
+import sys
+from src.environments.gridworld_env import GridWorld
+from src.agents.random_agent import RandomAgent
+from PIL import Image
 import gymnasium as gym
+import gymnasium.wrappers as gw
+
 import subprocess
 import inspect
 import sys
+import os
+import sys
+import inspect
+import keyboard
 
 from ..agents.random_agent import RandomAgent
 from ..agents.ql_agent import QLAgent
@@ -22,8 +33,8 @@ def log_episode(experiment, episode, metrics, video_frames):
         experiment.log_images(images, name="episode_video", step=episode)
 
 
-def selector():
-    # Lets the user select from available demos, and runs the selected demo.
+def selector(run_all=False):
+    # Lets the user select from available demos, and runs the selected demo(s).
     # Make sure the selector can handle other demo_xxx() functions
 
     # Get a list of all the demo functions in the current module
@@ -31,34 +42,76 @@ def selector():
     demo_funcs = [func for name, func in members if callable(func) and name.startswith("demo_")]
     demo_names = [func.__name__[5:].capitalize() for func in demo_funcs]
 
-    print("Available demos:")
+    # If run_all is True, add an extra option to run all available demos
+    if run_all:
+        demo_names.append("All")
+
+    print("Choose your demo:")
+
+    # Print available demos with numbered options
     for i, name in enumerate(demo_names, start=1):
         print(f"{i}. {name}")
 
-    demo_choice = input("Enter the demo number or name you want to run: ")
-    selected_func = None
+    # Select demo(s) with arrow keys
+    selected_indices = []
+    while True:
+        # Print options with selection indicator
+        for i, name in enumerate(demo_names):
+            prefix = "  " if i not in selected_indices else "->"
+            print(f"{prefix} {i+1}. {name}")
+        # Wait for arrow key input
+        event = keyboard.read_event()
+        if event.name == "down":
+            selected_indices = [(idx + 1) % len(demo_names) for idx in selected_indices]
+        elif event.name == "up":
+            selected_indices = [(idx - 1) % len(demo_names) for idx in selected_indices]
+        elif event.name == "enter":
+            # Run selected demo(s)
+            if len(selected_indices) == 0:
+                print("No demo selected.")
+                continue
+            if len(selected_indices) == len(demo_names):
+                # Run all demos
+                print("Running all demos...")
+                success = True
+                for i, func in enumerate(demo_funcs):
+                    print(f"Running demo {demo_names[i]}...")
+                    try:
+                        func()
+                        print(f"Demo {demo_names[i]} completed successfully.")
+                    except Exception as e:
+                        print(f"Demo {demo_names[i]} failed with error: {e}")
+                        success = False
+                        break
+                if success:
+                    print("All demonstrations completed successfully.")
+                    return demo_names
+                else:
+                    print("Some demonstrations failed.")
+                    return None
+            else:
+                # Run selected demos
+                success = True
+                for idx in selected_indices:
+                    func = demo_funcs[idx]
+                    print(f"Running demo {demo_names[idx]}...")
+                    try:
+                        func()
+                        print(f"Demo {demo_names[idx]} completed successfully.")
+                    except Exception as e:
+                        print(f"Demo {demo_names[idx]} failed with error: {e}")
+                        success = False
+                if success:
+                    print("Selected demonstrations completed successfully.")
+                    return [demo_names[idx] for idx in selected_indices]
+                else:
+                    print("Some demonstrations failed.")
+                    return None
+        elif event.name == "esc":
+            # Exit the function if escape key is pressed
+            print("Exiting selector.")
+            return None
 
-    # Try to parse input as integer first
-    try:
-        demo_choice_int = int(demo_choice)
-        if demo_choice_int in range(1, len(demo_funcs)+1):
-            selected_func = demo_funcs[demo_choice_int-1]
-    except ValueError:
-        pass
-
-    # If input was not an integer or not a valid demo number, try to match input as demo name
-    if not selected_func:
-        for func, name in zip(demo_funcs, demo_names):
-            if name.lower() == demo_choice.lower():
-                selected_func = func
-                break
-
-    if selected_func:
-        selected_func()
-    else:
-        print("Invalid demo number or name. Please try again.")
-        selector()
-    return demo_names
 
         
 def demo_tests():
@@ -99,6 +152,7 @@ def demo_gym():
 def demo_custom_env():
 
     env = GridWorld()
+    env = gw.Monitor(env, './visualizations/videos', force=True)
     agent = RandomAgent()
 
     num_episodes = 10
@@ -116,8 +170,8 @@ def demo_custom_env():
 
         print(f"Episode {episode + 1}/{num_episodes}, Total reward: {total_reward}")
 
-    env.render()
-    env.close()   
+    env.close()
+    gym.upload('./visualizations/videos', api_key='rmUirVtt14dtLV0tBScUMz9fL') 
     
 def demo_comet():
 

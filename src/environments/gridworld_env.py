@@ -4,6 +4,8 @@ import numpy as np
 
 
 class GridWorld(gym.Env):
+    metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 30}
+
     def __init__(self):
         super().__init__()
 
@@ -27,7 +29,7 @@ class GridWorld(gym.Env):
             raise ValueError("Cannot step in a terminal state")
 
         x, y = self.agent_position
-        reward = 1
+        reward = -1
         if action == 0:  # Move up
             y = max(0, y - 1)
         elif action == 1:  # Move down
@@ -49,8 +51,13 @@ class GridWorld(gym.Env):
         truncated = self.truncated
 
         return observation, reward, terminated, truncated, info
-    
-    def render(self, render_mode='human'):
-        grid_repr = np.zeros_like(self.state, dtype=str)
-        grid_repr[self.state == 0] = '.'
-        grid_repr[self.state]
+
+    def render(self, mode='human'):
+        grid = [['.' for _ in range(5)] for _ in range(5)]
+        grid[4][4] = 'G'
+        x, y = self.agent_position
+        grid[y][x] = 'A'
+
+        for row in grid:
+            print(' '.join(row))
+        print()
