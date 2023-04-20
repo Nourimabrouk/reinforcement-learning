@@ -9,8 +9,9 @@ from src.utils import demonstrations
 import altair as alt
 from src.integration import comet
 from src.agents.random_agent import RandomAgent
-from src.agents.ql_agent import QLearningAgent
+from src.agents.ql_agent import QLAgent
 import numpy
+import gymnasium as gym
 
 def main():
     st.set_page_config(layout="wide")
@@ -138,7 +139,7 @@ def create_agent_environment(agent_name, env_name):
     if agent_name == "RandomAgent":
         agent_instance = RandomAgent()
     elif agent_name == "QLearningAgent":
-        agent_instance = QLearningAgent()
+        agent_instance = QLAgent()
 
     environment_instance = gym.make(env_name)
 
