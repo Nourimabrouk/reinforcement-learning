@@ -1,41 +1,87 @@
-# comet_ml.py
 from comet_ml import Experiment
-import os
+import streamlit as st
+import plotly.graph_objects as go
 
-def create_comet_experiment(api_key=None, project_name=None, workspace=None):
-    """
-    Create a Comet ML experiment for logging metrics, parameters, and visualizations.
+api_key = "rmUirVtt14dtLV0tBScUMz9fL"
+project_name = "reinforcement-learning"
+workspace = "nourimabrouk"
 
-    :param api_key: (str) Your Comet ML API key.
-    :param project_name: (str) Name of the project in Comet ML.
-    :param workspace: (str) Name of the workspace in Comet ML.
-    :return: (comet_ml.Experiment) The Comet ML experiment object.
-    """
-
-    if api_key is None:
-        api_key = os.environ.get("COMET_API_KEY")
-
-    if project_name is None:
-        project_name = "reinforcement-learning"
-
-    if workspace is None:
-        workspace = "your_workspace_name"
-
-    experiment = Experiment(
-        api_key=api_key,
-        project_name=project_name,
-        workspace=workspace,
-        auto_param_logging=True,
-        auto_metric_logging=True,
-        parse_args=False,
-    )
-
+def initialize_experiment(api_key="yrmUirVtt14dtLV0tBScUMz9fL", project_name="reinforcement-learning"):
+    experiment = Experiment(api_key=api_key, project_name=project_name)
     return experiment
 
-#     # Log the agent's performance
-#     def log_agent(self, agent, environment, metrics):
-#         # ...
+def log_hyperparameters(experiment, hyperparameters):
+    experiment.log_parameters(hyperparameters)
 
-#     # Retrieve the agent's performance history
-#     def get_agent_history(self, agent, environment):
-#         # ...
+def log_parameters(experiment, parameters):
+    experiment.log_parameters(parameters)
+
+def log_metrics(experiment, metrics):
+    experiment.log_metrics(metrics)
+
+def log_episode(experiment, episode, metrics):
+    for metric_name, metric_value in metrics.items():
+        experiment.log_metric(metric_name, metric_value, step=episode)
+
+def upload_model_weights(experiment, model_filepath):
+    experiment.log_asset(model_filepath)
+
+def end_experiment(experiment):
+    experiment.end()
+
+def get_experiment_data(experiment_key):
+    return Experiment(api_key=api_key, project_name=project_name, previous_experiment=experiment_key)
+
+def plot_experiment_metrics(experiment_data):
+    fig = go.Figure()
+
+    for metric_name in experiment_data.get_metrics_summary():
+        data = experiment_data.get_metric(metric_name)
+        fig.add_trace(go.Scatter(x=list(range(len(data))), y=data, mode='lines', name=metric_name))
+
+    fig.update_layout(title='Experiment Metrics', xaxis_title='Step', yaxis_title='Value')
+    fig.show()
+
+def streamlit_comet_interaction(api_key, project_name):
+    st.title("Comet.ml Experiment Interaction")
+    
+    # Create a Comet experiment instance
+    experiment = Experiment(api_key=api_key, project_name=project_name, workspace=workspace)
+
+    # Fetch the list of experiments in the project
+    experiments = experiment.get_all()
+
+    experiment_options = [(exp.id, f"{exp.name} ({exp.id})") for exp in experiments]
+    
+    # Create a dropdown to select an experiment
+    selected_experiment_id, selected_experiment_label = st.selectbox(
+        "Select an Experiment",
+        options=experiment_options,
+        format_func=lambda x: x[1]
+    )
+
+    if selected_experiment_id:
+        # Load the experiment
+        experiment = get_experiment_data(selected_experiment_id)
+
+        # Display experiment details
+        st.write(f"Experiment: {experiment.name}")
+        st.write(f"Tags: {', '.join(experiment.get_tags())}")
+
+        # Display experiment metrics
+        metrics = experiment.get_metrics()
+        st.write("Metrics:")
+        for metric in metrics:
+            st.write(f"{metric['name']}: {metric['valueMax']}")
+
+        # Display experiment hyperparameters
+        hyperparameters = experiment.get_parameters()
+        st.write("Hyperparameters:")
+        for key, value in hyperparameters.items():
+            st.write(f"{key}: {value}")
+
+        # Display any other experiment-related information, plots, or images
+        # ...
+
+    else:
+        st.write("No experiments available.")

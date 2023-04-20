@@ -7,7 +7,7 @@ class RandomAgent(BaseAgent):
         self.action_space = gym.spaces.Discrete(2)
         
     def choose_action(self, state):
-        return self.action_space.sample()
+        return int(self.action_space.sample())
 
     def learn(self, transition):
         pass

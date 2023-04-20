@@ -1,21 +1,25 @@
 import pytest
 import gymnasium as gym
-from src.agents.ql_agent import QLAgent
 import numpy as np
+from src.agents.ql_agent import QLAgent
+from src.environments.gridworld_env import GridWorld
+
 
 @pytest.fixture
 def ql_agent():
-    config = {
-        "action_space": gym.spaces.Discrete(4),
-        "observation_space": gym.spaces.Box(low=0, high=255, shape=(84, 84, 4), dtype=np.uint8)
-    }
-    return QLAgent(config)
+    env = GridWorld()
+    agent = QLAgent(env)
+    return agent
+
 
 def test_choose_action(ql_agent):
-    state = np.zeros((84, 84, 4))
+    state = (0, 0)
     action = ql_agent.choose_action(state)
-    assert ql_agent.config["action_space"].contains(action)
+    assert 0 <= action < 4
+
 
 def test_learn(ql_agent):
-    transition = (np.zeros((84, 84, 4)), 0, 0, np.zeros((84, 84, 4)), False)
-    ql_agent.learn(transition)  # Test if the learn function doesn't raise any exceptions
+    initial_q_table = ql_agent.q_table.copy()
+    transition = (ql_agent.env.reset(), 0, 1, ql_agent.env.step(0)[0], False)
+    ql_agent.learn(transition)
+    assert not np.array_equal(initial_q_table, ql_agent.q_table)

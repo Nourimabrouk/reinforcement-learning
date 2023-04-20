@@ -1,10 +1,11 @@
-import gymnasium as gym
+import gym
+import comet_ml  
 import subprocess
 import inspect
 import sys
 from ..agents.random_agent import RandomAgent
 from ..environments.gridworld_env import GridWorld
-from ..integration.comet import create_comet_experiment
+from ..integration.comet import initialize_experiment, log_parameters, log_hyperparameters, log_metrics, log_episode, upload_model_weights, end_experiment
 from ..agents.ql_agent import QLAgent
 
 
@@ -97,63 +98,70 @@ def demo_custom_env():
             action = agent.choose_action(state)
             observation, reward, terminated, truncated, info = env.step(action)
             done = terminated or truncated
-            state = next_state
+            state = observation
             total_reward += reward
 
         print(f"Episode {episode + 1}/{num_episodes}, Total reward: {total_reward}")
 
     env.render()
     env.close()   
-
+    
 def demo_comet():
-    """
-    A demonstration of using Comet ML for logging metrics and parameters in a reinforcement learning experiment.
-    """
 
     # Set your Comet ML API key
-    api_key = "your_comet_ml_api_key_here"
+    api_key = "rmUirVtt14dtLV0tBScUMz9fL"
 
-    # Create a Comet ML experiment
-    experiment = create_comet_experiment(api_key=api_key)
+    # Initialize the Comet experiment
+    experiment = initialize_experiment(api_key=api_key, project_name="reinforcement-learning")
+
+    # Set the experiment name
+    experiment.set_name("test-experiment")
+    
 
     # Set up the environment and agent
-    env = gym.make("CartPole-v0")
-    agent = RandomAgent(env)
+    env = gym.make("CartPole-v1")
+    agent = RandomAgent()
 
     # Log environment and agent details
-    experiment.log_parameter("environment_name", "CartPole-v0")
-    experiment.log_parameter("agent", "RandomAgent")
+    log_parameters(experiment, {"environment_name": "CartPole-v1", "agent": "RandomAgent"})
+
+    # Log hyperparameters and other relevant information
+    hyperparameters = {"learning_rate": 0.001, "epochs": 100}
+    log_hyperparameters(experiment, hyperparameters)
 
     # Train the agent
     num_episodes = 500
-    experiment.log_parameter("num_episodes", num_episodes)
+    log_parameters(experiment, {"num_episodes": num_episodes})
 
     for episode in range(num_episodes):
         state = env.reset()
         done = False
         total_reward = 0
-        steps = 0
+        step = 0
 
         while not done:
             action = agent.choose_action(state)
-            next_state, reward, done, info = env.step(action)
-            state = next_state
+            observation, reward, terminated, truncated, info = env.step(action)
+            agent.learn((state, action, reward, observation, done))
+            done = terminated or truncated
+            state = observation
             total_reward += reward
-            steps += 1
+            step += 1
 
         # Log episode metrics
-        experiment.log_metric("episode_reward", total_reward, step=episode)
-        experiment.log_metric("episode_length", steps, step=episode)
+        metrics = {"episode_reward": total_reward, "episode_length": step}
+        log_metrics(experiment, metrics)
 
         # Log episode visuals (e.g. reward distribution)
         experiment.log_histogram_3d([total_reward], name="reward_distribution", step=episode)
 
-    # Log other assets, such as the agent's Q-table
-    if hasattr(agent, "q_table"):
-        experiment.log_asset_data(agent.q_table, "q_table.pkl")
+    # End the Comet experiment
+    end_experiment(experiment)
 
-    # End the experiment
-    experiment.end()
+    # Show the experiment URL
+    print(f"View the experiment at {experiment.url}")
+
+    
         
 if __name__ == "__main__":
     selector()

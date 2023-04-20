@@ -2,43 +2,55 @@ import gym
 from gym import spaces
 import numpy as np
 
+
 class GridWorld(gym.Env):
-    def __init__(self, config=None):
+    def __init__(self):
         super().__init__()
 
-        self.observation_space = spaces.Box(low=0, high=1, shape=(4, 4), dtype=np.float32)
-        self.action_space = gym.spaces.Discrete(4)  
+        self.observation_space = gym.spaces.Tuple((gym.spaces.Discrete(5), gym.spaces.Discrete(5)))
+        self.action_space = gym.spaces.Discrete(4)
 
-        self.grid = np.zeros((4, 4))
-        self.state = (0, 0)
-        self.goal = (3, 3)
+        self.agent_position = (0, 0)
+        self.done = False
+        self.truncated = False
+        self.info = {}
 
     def reset(self):
-        self.state = (0, 0)
-        return self.state
+        self.agent_position = (0, 0)
+        self.done = False
+        self.truncated = False
+        self.info = {}
+        return self.agent_position
 
     def step(self, action):
-        x, y = self.state
+        if self.done:
+            raise ValueError("Cannot step in a terminal state")
 
-        if action == 0:
-            x = np.clip(x - 1, 0, 3)
-        elif action == 1:
-            x = np.clip(x + 1, 0, 3)
-        elif action == 2:
-            y = np.clip(y - 1, 0, 3)
-        elif action == 3:
-            y = np.clip(y + 1, 0, 3)
+        x, y = self.agent_position
+        reward = 1
+        if action == 0:  # Move up
+            y = max(0, y - 1)
+        elif action == 1:  # Move down
+            y = min(4, y + 1)
+        elif action == 2:  # Move left
+            x = max(0, x - 1)
+        elif action == 3:  # Move right
+            x = min(4, x + 1)
 
-        self.state = (x, y)
+        self.agent_position = (x, y)
 
-        done = self.state == self.goal
-        reward = 1 if done else -1
+        if self.agent_position == (4, 4):  # Goal position
+            self.done = True
+            reward = 100
 
-        return self.state, reward, done, {}
+        observation = self.agent_position
+        info = self.info
+        terminated = self.done
+        truncated = self.truncated
 
-    def render(self, mode='human'):
-        grid_repr = np.zeros_like(self.grid, dtype=str)
-        grid_repr[self.grid == 0] = '.'
-        grid_repr[self.state] = 'A'
-        grid_repr[self.goal] = 'G'
-        print(grid_repr)
+        return observation, reward, terminated, truncated, info
+    
+    def render(self, render_mode='human'):
+        grid_repr = np.zeros_like(self.state, dtype=str)
+        grid_repr[self.state == 0] = '.'
+        grid_repr[self.state]
