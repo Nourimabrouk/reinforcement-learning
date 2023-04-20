@@ -19,44 +19,7 @@ The project requires Python version 3.11.3 or later.
 
 The entry point of the project is `main.py`, which installs required packages, imports all modules in `src` and `configs`, and prints a simple output. To run the project, simply run the following command:
 
-python main.py 
-
-The project structure is as follows:
-reinforcementlearning/
-            ├── env/
-            │   ├── etc/
-            │   ├── Lib/
-            │   ├── Scripts/
-            │   └── ...
-            ├── src/
-            │   ├── agents/
-            │   │   ├── __init__.py
-            │   │   ├── base_agent.py
-            │   │   └── ...
-            │   ├── environments/
-            │   │   ├── __init__.py
-            │   │   ├── base_environment.py
-            │   │   └── ...
-            │   ├── utils/
-            │   │   ├── __init__.py
-            │   │   ├── visualization.py
-            │   │   ├── logging.py
-            │   │   └── ...
-            │   ├── tests/
-            │   │   ├── __init__.py
-            │   │   ├── base_test.py
-            │   │   └── ...
-            │   ├── configs/
-            │   │   ├── __init__.py
-            │   │   ├── config.py
-            │   │   └── ...
-            │   ├── integrations/
-            │   │   ├── __init__.py
-            │   │   ├── comet_ml.py
-            │   │   ├── streamlit_app.py
-            │   │   └── ...
-            │   └── __init__.py
-            └── main.py
+pip install - requirements.txt
             
 ## License
 
