@@ -10,6 +10,32 @@ def initialize_experiment(api_key="yrmUirVtt14dtLV0tBScUMz9fL", project_name="re
     experiment = Experiment(api_key=api_key, project_name=project_name)
     return experiment
 
+def run_experiment(experiment, env, agent, experiment_name, render_video, num_episodes=5000):
+    log_parameters(experiment, {"experiment": experiment_name})
+    for episode in range(num_episodes):
+        state = env.reset()
+        done = False
+        total_reward = 0
+        video_frames = []
+
+        while not done:
+            action = agent.choose_action(state)
+            observation, reward, terminated, truncated, info = env.step(action)
+            done = terminated or truncated
+            transition = (state, action, reward, observation, done)
+            agent.learn(transition)
+            state = observation
+            total_reward += reward
+
+            if render_video:
+                frame = env.render(mode='rgb_array')
+                video_frames.append(frame)
+
+        metrics = {"episode_reward": total_reward}
+        log_metrics(experiment, metrics)
+        log_episode(experiment, episode, metrics, video_frames)
+
+
 def log_hyperparameters(experiment, hyperparameters):
     experiment.log_parameters(hyperparameters)
 

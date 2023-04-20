@@ -1,12 +1,25 @@
-import gym
-import comet_ml  
+import gymnasium as gym
 import subprocess
 import inspect
 import sys
+
 from ..agents.random_agent import RandomAgent
-from ..environments.gridworld_env import GridWorld
-from ..integration.comet import initialize_experiment, log_parameters, log_hyperparameters, log_metrics, log_episode, upload_model_weights, end_experiment
 from ..agents.ql_agent import QLAgent
+from ..environments.gridworld_env import GridWorld
+from ..integration.comet import initialize_experiment, run_experiment, log_parameters, log_hyperparameters, log_metrics, log_episode, upload_model_weights, end_experiment
+
+RENDER_VIDEO = False
+api_key = "rmUirVtt14dtLV0tBScUMz9fL"
+project_name = "reinforcement-learning"
+workspace = "nourimabrouk"
+
+def log_episode(experiment, episode, metrics, video_frames):
+    for metric_name, metric_value in metrics.items():
+        experiment.log_metric(metric_name, metric_value, step=episode)
+
+    if video_frames:
+        images = [Image.fromarray(frame) for frame in video_frames]
+        experiment.log_images(images, name="episode_video", step=episode)
 
 
 def selector():
@@ -161,7 +174,37 @@ def demo_comet():
     # Show the experiment URL
     print(f"View the experiment at {experiment.url}")
 
+def demo_QL():
+    # Set your Comet ML API key
+    api_key = "rmUirVtt14dtLV0tBScUMz9fL"
+
+    # Initialize the Comet experiment
+    experiment = initialize_experiment(api_key=api_key, project_name="reinforcement-learning")
+
+    # Set the experiment name
+    experiment.set_name("QLAgent-experiments")
+
+    # Set up the environments and agents
+    env1 = gym.make("FrozenLake-v1")
+    agent1 = QLAgent(env1)
+
+    env2 = gym.make("CartPole-v1")
+    agent2 = QLAgent(env2)
+
+    env3 = gym.make("Acrobot-v1")
+    agent3 = QLAgent(env3)
     
+    RENDER_VIDEO = True
+
+    # Run experiments
+    run_experiment(experiment, env1, agent1, "FrozenLake-v1", RENDER_VIDEO)
+    run_experiment(experiment, env2, agent2, "CartPole-v1", RENDER_VIDEO)
+    run_experiment(experiment, env3, agent3, "Acrobot-v1", RENDER_VIDEO)
+
+    # End the Comet experiment
+    end_experiment(experiment)
+    # End the Comet experiment
+    end_experiment(experiment)   
         
 if __name__ == "__main__":
     selector()
