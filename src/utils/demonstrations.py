@@ -44,7 +44,7 @@ def selector(run_all=False):
 
     # If run_all is True, add an extra option to run all available demos
     if run_all:
-        demo_names.append("All")
+        demo_names.insert(0, "All")
 
     print("Choose your demo:")
 
@@ -53,60 +53,53 @@ def selector(run_all=False):
         print(f"{i}. {name}")
 
     # Select demo(s) with arrow keys
-    selected_indices = []
+    selected_index = 0
     while True:
+        # Clear the console
+        sys.stdout.write("\033[H")
+        sys.stdout.write("\033[J")
+
+        print("Choose your demo:")
+
         # Print options with selection indicator
         for i, name in enumerate(demo_names):
-            prefix = "  " if i not in selected_indices else "->"
+            prefix = "  " if i != selected_index else "->"
             print(f"{prefix} {i+1}. {name}")
         # Wait for arrow key input
         event = keyboard.read_event()
         if event.name == "down":
-            selected_indices = [(idx + 1) % len(demo_names) for idx in selected_indices]
+            selected_index = (selected_index + 1) % len(demo_names)
         elif event.name == "up":
-            selected_indices = [(idx - 1) % len(demo_names) for idx in selected_indices]
+            selected_index = (selected_index - 1) % len(demo_names)
         elif event.name == "enter":
             # Run selected demo(s)
-            if len(selected_indices) == 0:
-                print("No demo selected.")
-                continue
-            if len(selected_indices) == len(demo_names):
+            if selected_index == 0:
                 # Run all demos
                 print("Running all demos...")
                 success = True
                 for i, func in enumerate(demo_funcs):
-                    print(f"Running demo {demo_names[i]}...")
+                    print(f"Running demo {demo_names[i+1]}...")
                     try:
                         func()
-                        print(f"Demo {demo_names[i]} completed successfully.")
+                        print(f"Demo {demo_names[i+1]} completed successfully.")
                     except Exception as e:
-                        print(f"Demo {demo_names[i]} failed with error: {e}")
+                        print(f"Demo {demo_names[i+1]} failed with error: {e}")
                         success = False
                         break
                 if success:
                     print("All demonstrations completed successfully.")
-                    return demo_names
                 else:
                     print("Some demonstrations failed.")
-                    return None
             else:
-                # Run selected demos
-                success = True
-                for idx in selected_indices:
-                    func = demo_funcs[idx]
-                    print(f"Running demo {demo_names[idx]}...")
-                    try:
-                        func()
-                        print(f"Demo {demo_names[idx]} completed successfully.")
-                    except Exception as e:
-                        print(f"Demo {demo_names[idx]} failed with error: {e}")
-                        success = False
-                if success:
-                    print("Selected demonstrations completed successfully.")
-                    return [demo_names[idx] for idx in selected_indices]
-                else:
-                    print("Some demonstrations failed.")
-                    return None
+                # Run selected demo
+                func = demo_funcs[selected_index - 1]
+                print(f"Running demo {demo_names[selected_index]}...")
+                try:
+                    func()
+                    print(f"Demo {demo_names[selected_index]} completed successfully.")
+                except Exception as e:
+                    print(f"Demo {demo_names[selected_index]} failed with error: {e}")
+            return None
         elif event.name == "esc":
             # Exit the function if escape key is pressed
             print("Exiting selector.")

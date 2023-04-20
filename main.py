@@ -7,6 +7,7 @@ import gymnasium as gym
 from src.utils import demonstrations
 
 def main():
+    print("Starting")
     demonstrations.selector()
     return
 
