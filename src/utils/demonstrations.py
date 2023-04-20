@@ -8,7 +8,6 @@ from ..integration.comet import create_comet_experiment
 from ..agents.ql_agent import QLAgent
 
 
-
 def selector():
     # Lets the user select from available demos, and runs the selected demo.
     # Make sure the selector can handle other demo_xxx() functions

@@ -8,24 +8,11 @@ import sys
 from src.utils import demonstrations
 import altair as alt
 
-
-# Setup web deployment:
-# subprocess.call(["pip", "install", "-r", "requirements.txt"])
-# from src.integration.comet_ml import CometIntegration
-# comet_integration = CometIntegration()
-
 def main():
     st.set_page_config(layout="wide")
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.title("Reinforcement Learning Gym Demo")
-        st.header("Welcome to the Interactive RL Demo!")
-        st.write("Explore various reinforcement learning agents and environments, run tests, and watch demonstrations using Comet ML for tracking and visualization.")
-
-    with col2:
-        st.title("Navigation")
-        page = st.radio("Select a page:", ["Home", "Testing", "Agent and Environment Descriptions", "Demonstrations", "About", "Gallery"])
+    
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Select a page:", ["Home", "Testing", "Agent and Environment Descriptions", "Demonstrations", "Interactive Environment", "About", "Gallery"])
 
     if page == "Home":
         display_home()
@@ -35,13 +22,16 @@ def main():
         display_descriptions()
     elif page == "Demonstrations":
         display_demonstrations()
-    elif page == "About":
-        display_about()
+    elif page == "Interactive Environment":
+        display_agent_environment()
     elif page == "Gallery":
         display_gallery()
-
+    elif page == "Interactive Environment":
+        display_interactive_environment()   
+    elif page == "About":
+        display_about()
+ 
 def display_home():
-# Set page background color
     page_bg_img = '''
     <style>
     body {
@@ -62,7 +52,9 @@ def display_home():
     - Interactive testing and visualization of reinforcement learning agents
     - Agent and environment descriptions
     - Demonstrations of pre-trained agents
+    - Interactive environment with agent and environment selection
     """)
+
 
 def display_testing():
     st.header("Testing Page")
@@ -126,28 +118,25 @@ def display_demonstrations():
 
 def display_agent_environment():
     st.header("Select an agent and an environment")
-    # Load the list of available agents and environments
+    
     agent_names = ["RandomAgent", "QLearningAgent"]  # replace with actual list of agent names
     
-    # Read environment names from src/environments/environments.md
-    with open(os.path.join("src", "environments", "environments.md"), "r") as f:
-        env_lines = f.readlines()
-    env_names = [line.strip() for line in env_lines if line.startswith("-")]
+    env_names = ["CustomEnvironment1", "CustomEnvironment2"]  # replace with actual list of environment names
     
-    # Display dropdown menus to select an agent and an environment
-    agent_name = st.selectbox("Select an agent:", agent_names)
-    env_name = st.selectbox("Select an environment:", env_names)
-    # Import the selected agent and environment modules
+    agent_name = st.sidebar.selectbox("Select an agent:", agent_names)
+    env_name = st.sidebar.selectbox("Select an environment:", env_names)
+    
     agent_module = importlib.import_module(f"src.agents.{agent_name.lower()}")
     environment_module = importlib.import_module(f"src.environments.{env_name.lower()}")
-    # Create instances of the agent and environment
-    agent_instance = agent_module.Agent()
-    environment_instance = environment_module.Environment()
-    # Display the interactive environment visualization
+    
+    agent_instance = agent_module.Agent()  # Replace with the specific agent class constructor
+    environment_instance = environment_module.Environment()  # Replace with the specific environment class constructor
+    
     display_interactive_environment(agent_instance, environment_instance)
 
 def display_interactive_environment(agent, environment):
     st.header("Interactive Environment Visualization")
+    
     agent.set_environment(environment)
     agent.train()
     environment.render_interactive()

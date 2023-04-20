@@ -3,7 +3,6 @@ import sys
 import gymnasium as gym
 
 # add src directory to path
-sys.path.append(os.path.abspath("src"))
 
 from src.utils import demonstrations
 
