@@ -3,6 +3,7 @@ import streamlit as st
 import subprocess
 import importlib
 import pytest
+import traceback
 import io
 import sys
 from src.utils import demonstrations
@@ -65,7 +66,7 @@ def display_testing():
     st.header("Testing Page")
 
     # List available test files
-    test_files = [f for f in os.listdir("tests") if f.startswith("test_") and f.endswith(".py")]
+    test_files = [f for f in os.listdir("src/tests") if f.startswith("test_") and f.endswith(".py")]
 
     # Create a radio button for users to choose between running all tests or specific tests
     test_option = st.radio("Choose a testing option:", ["Run all tests", "Run specific tests"])
@@ -156,37 +157,42 @@ def display_agent_environment():
 
     agent_instance, environment_instance = create_agent_environment(agent_name, env_name)
     display_interactive_environment(agent_instance, environment_instance)
-
+    
 def display_interactive_environment(agent, environment):
-    st.header("Interactive Environment Visualization")
+    try:
+        st.header("Interactive Environment Visualization")
 
-    experiment = comet.initialise_experiment()
-    experiment.log_parameter("Agent", str(agent))
-    experiment.log_parameter("Environment", str(environment))
+        experiment = comet.initialise_experiment()
+        experiment.log_parameter("Agent", str(agent))
+        experiment.log_parameter("Environment", str(environment))
 
-    agent.set_environment(environment)
-    for episode in range(environment.num_episodes):
-        state = environment.reset()
-        episode_reward = 0
+        agent.set_environment(environment)
+        for episode in range(environment.num_episodes):
+            state = environment.reset()
+            episode_reward = 0
 
-        for step in range(environment.max_steps_per_episode):
-            action = agent.choose_action(state)
-            next_state, reward, truncated, terminated, info = environment.step(action)
-            done = truncated or terminated
-            episode_reward += reward
+            for step in range(environment.max_steps_per_episode):
+                action = agent.choose_action(state)
+                next_state, reward, truncated, terminated, info = environment.step(action)
+                done = truncated or terminated
+                episode_reward += reward
 
-            agent.learn((next_state, reward, truncated, terminated, info))
+                agent.learn((next_state, reward, truncated, terminated, info))
 
-            if done:
-                break
+                if done:
+                    break
 
-            state = next_state
+                state = next_state
 
-        experiment.log_metric("Episode Reward", episode_reward, step=episode)
+            experiment.log_metric("Episode Reward", episode_reward, step=episode)
 
-    experiment.end()
+        experiment.end()
 
-    environment.render_interactive()
+        environment.render_interactive()
+        
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
+        st.write(traceback.format_exc())
 
 def display_gallery():
     st.header("Gallery")
