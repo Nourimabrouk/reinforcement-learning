@@ -32,8 +32,6 @@ def main():
         display_agent_environment()
     elif page == "Gallery":
         display_gallery()
-    elif page == "Interactive Environment":
-        display_interactive_environment()   
     elif page == "About":
         display_about()
  
@@ -88,7 +86,7 @@ def display_testing():
         sys.stdout = stdout_capture
 
         # Add the full path to the test files
-        full_test_file_paths = [os.path.join("tests", test_file) for test_file in selected_test_files]
+        full_test_file_paths = [os.path.join("src/tests", test_file) for test_file in selected_test_files]
 
         # Run pytest programmatically
         pytest.main(full_test_file_paths)
@@ -98,7 +96,7 @@ def display_testing():
         test_results = stdout_capture.getvalue()
         st.write("```\n" + test_results + "\n```")
 
-@st.cache
+@st.cache_data
 def load_app_text():
     with open(os.path.join("src", "integration", "descriptions.md"), "r") as f:
         app_text = f.read()
@@ -162,7 +160,7 @@ def display_interactive_environment(agent, environment):
     try:
         st.header("Interactive Environment Visualization")
 
-        experiment = comet.initialise_experiment()
+        experiment = comet.initialize_experiment()
         experiment.log_parameter("Agent", str(agent))
         experiment.log_parameter("Environment", str(environment))
 

@@ -6,14 +6,13 @@ from PIL import Image
 import gymnasium as gym
 import gymnasium.wrappers as gw
 import time
-
+import streamlit as st
 import subprocess
 import inspect
 import sys
 import os
 import sys
 import inspect
-import keyboard
 
 from ..agents.random_agent import RandomAgent
 from ..agents.ql_agent import QLAgent
@@ -32,7 +31,6 @@ def log_episode(experiment, episode, metrics, video_frames):
     if video_frames:
         images = [Image.fromarray(frame) for frame in video_frames]
         experiment.log_images(images, name="episode_video", step=episode)
-
 def selector():
     # Get a list of all the demo functions in the current module
     members = inspect.getmembers(sys.modules[__name__])
@@ -42,63 +40,57 @@ def selector():
     # Add "Run all demos" to the beginning of the list
     demo_names.insert(0, "Run all demos")
 
-    print("Choose your demo:")
+    st.write("Choose your demo:")
 
     # Print available demos with numbered options
     for i, name in enumerate(demo_names, start=1):
-        print(f"{i}. {name}")
+        st.write(f"{i}. {name}")
 
     # Select demo(s) with arrow keys
     selected_index = 0
     while True:
-        # Clear the console
-        sys.stdout.write("\033[H")
-        sys.stdout.write("\033[J")
-
-        print("Choose your demo:")
-
-        # Print options with selection indicator
-        for i, name in enumerate(demo_names):
-            prefix = "  " if i != selected_index else "->"
-            print(f"{prefix} {i}. {name}")
-
         # Wait for arrow key input
-        event = keyboard.read_event()
-        if event.name == "down":
+        event = st.experimental_get_query_params().get("key")
+        if event == "ArrowDown":
             selected_index = (selected_index + 1) % len(demo_names)
             time.sleep(0.1)
-        elif event.name == "up":
+        elif event == "ArrowUp":
             selected_index = (selected_index - 1) % len(demo_names)
             time.sleep(0.1)
-        elif event.name == "enter":
+        elif event == "Enter":
             # Run selected demo(s)
             if selected_index == 0:
                 # Run all demos
-                print("Running all demos...")
+                st.write("Running all demos...")
                 success = True
                 for i, func in enumerate(demo_funcs):
-                    print(f"Running demo {demo_names[i+1]}...")
+                    st.write(f"Running demo {demo_names[i+1]}...")
                     try:
                         func()
-                        print(f"Demo {demo_names[i+1]} completed successfully.")
+                        st.write(f"Demo {demo_names[i+1]} completed successfully.")
                     except Exception as e:
-                        print(f"Demo {demo_names[i+1]} failed with error: {e}")
+                        st.write(f"Demo {demo_names[i+1]} failed with error: {e}")
                         success = False
                         break
             else:
                 # Run selected demo
                 func = demo_funcs[selected_index - 1]
-                print(f"Running demo {demo_names[selected_index]}...")
+                st.write(f"Running demo {demo_names[selected_index]}...")
                 try:
                     func()
-                    print(f"Demo {demo_names[selected_index]} completed successfully.")
+                    st.write(f"Demo {demo_names[selected_index]} completed successfully.")
                 except Exception as e:
-                    print(f"Demo {demo_names[selected_index]} failed with error: {e}")
+                    st.write(f"Demo {demo_names[selected_index]} failed with error: {e}")
             return None
-        elif event.name == "esc":
+        elif event == "Escape":
             # Exit the function if escape key is pressed
-            print("Exiting selector.")
+            st.write("Exiting selector.")
             return None
+
+        # Print options with selection indicator
+        for i, name in enumerate(demo_names):
+            prefix = "->" if i == selected_index else "  "
+            st.write(f"{prefix} {i}. {name}")
 
 
 def demo_tests():
