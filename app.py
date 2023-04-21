@@ -110,30 +110,48 @@ def display_descriptions():
 def display_demonstrations():
     st.header("Demonstrations")
 
-    # Get a list of all the demo functions in the current module
     demo_names = demonstrations.selector()
+    demo_funcs = [getattr(demonstrations, f"demo_{name.lower()}") for name in demo_names]
 
-    # Create a dropdown menu to select a demonstration
-    selected_demo = st.selectbox("Select a demonstration:", demo_names)
+    # Add "Run all demos" to the beginning of the list
+    demo_names.insert(0, "Run all demos")
 
-    # Provide description of the selected demonstration (markdown)
-    demo_description = f"**{selected_demo}**: A demonstration of {selected_demo}."
-    st.markdown(demo_description)
+    st.write("Choose your demo:")
 
-    if st.button("Run demonstration"):
-        # Get the selected demo function
-        demo_func = getattr(demonstrations, f"demo_{selected_demo.lower()}")
+    # Use a selectbox to display available demos
+    selected_demo = st.selectbox("", demo_names)
 
-        # Run the selected demo function and capture the output
-        output = io.StringIO()
-        sys.stdout = output
-        demo_func()
-        sys.stdout = sys.__stdout__
+    if selected_demo:
+        selected_index = demo_names.index(selected_demo)
+        if 0 <= selected_index < len(demo_names):
+            # Run selected demo(s)
+            if selected_index == 0:
+                # Run all demos
+                st.write("Running all demos...")
+                success = True
+                for i, func in enumerate(demo_funcs):
+                    st.write(f"Running demo {demo_names[i + 1]}...")
+                    try:
+                        func()
+                        st.write(f"Demo {demo_names[i + 1]} completed successfully.")
+                    except Exception as e:
+                        st.write(f"Demo {demo_names[i + 1]} failed with error: {e}")
+                        success = False
+                        break
+            else:
+                # Run selected demo
+                func = demo_funcs[selected_index - 1]
+                st.write(f"Running demo {demo_names[selected_index]}...")
+                try:
+                    func()
+                    st.write(f"Demo {demo_names[selected_index]} completed successfully.")
+                except Exception as e:
+                    st.write(f"Demo {demo_names[selected_index]} failed with error: {e}")
+        else:
+            st.write("Invalid demo number. Please enter a valid number.")
+    else:
+        st.write("Please enter a demo number to run.")
 
-        # Display the output in the Streamlit app
-        st.text(output.getvalue())
-
-@st.cache(allow_output_mutation=True)
 def create_agent_environment(agent_name, env_name):
     if agent_name == "RandomAgent":
         agent_instance = RandomAgent()
