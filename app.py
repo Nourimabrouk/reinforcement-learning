@@ -1,4 +1,6 @@
 import os
+import imageio
+
 import streamlit as st
 import subprocess
 import importlib
@@ -14,8 +16,9 @@ from src.agents.ql_agent import QLAgent
 import numpy
 import gymnasium as gym
 
+st.set_page_config(layout="wide")
+
 def main():
-    st.set_page_config(layout="wide")
     
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Select a page:", ["Home", "Testing", "Agent and Environment Descriptions", "Demonstrations", "Interactive Environment", "About", "Gallery"])
@@ -111,104 +114,91 @@ def display_demonstrations():
     st.header("Demonstrations")
 
     demo_names = demonstrations.selector()
-    demo_funcs = [getattr(demonstrations, f"demo_{name.lower()}") for name in demo_names]
 
-    # Add "Run all demos" to the beginning of the list
-    demo_names.insert(0, "Run all demos")
+    selected_demo = st.selectbox("Choose your demo:", demo_names)
+    
+    run_button = st.button("Run", key="run_demo")
 
-    st.write("Choose your demo:")
-
-    # Use a selectbox to display available demos
-    selected_demo = st.selectbox("", demo_names)
-
-    if selected_demo:
-        selected_index = demo_names.index(selected_demo)
-        if 0 <= selected_index < len(demo_names):
-            # Run selected demo(s)
-            if selected_index == 0:
-                # Run all demos
-                st.write("Running all demos...")
-                success = True
-                for i, func in enumerate(demo_funcs):
-                    st.write(f"Running demo {demo_names[i + 1]}...")
-                    try:
-                        func()
-                        st.write(f"Demo {demo_names[i + 1]} completed successfully.")
-                    except Exception as e:
-                        st.write(f"Demo {demo_names[i + 1]} failed with error: {e}")
-                        success = False
-                        break
+    if run_button:
+        if selected_demo:
+            if selected_demo.lower() == "run all demos":
+                demo_func = demonstrations.demo_all
             else:
-                # Run selected demo
-                func = demo_funcs[selected_index - 1]
-                st.write(f"Running demo {demo_names[selected_index]}...")
-                try:
-                    func()
-                    st.write(f"Demo {demo_names[selected_index]} completed successfully.")
-                except Exception as e:
-                    st.write(f"Demo {demo_names[selected_index]} failed with error: {e}")
+                demo_func_name = f"demo_{selected_demo.lower()}"
+                demo_func = getattr(demonstrations, demo_func_name)
+
+            st.write(f"Running demo {selected_demo}...")
+            try:
+                demo_func()
+                st.write(f"Demo {selected_demo} completed successfully.")
+            except Exception as e:
+                st.write(f"Demo {selected_demo} failed with error: {e}")
         else:
-            st.write("Invalid demo number. Please enter a valid number.")
-    else:
-        st.write("Please enter a demo number to run.")
+            st.write("Please select a demo to run.")
 
 def create_agent_environment(agent_name, env_name):
-    if agent_name == "RandomAgent":
-        agent_instance = RandomAgent()
-    elif agent_name == "QLearningAgent":
-        agent_instance = QLAgent()
+    
+    environment_instance = gym.make(env_name, render_mode = "rgb_array")
 
-    environment_instance = gym.make(env_name)
+    if agent_name == "RandomAgent":
+        agent_instance = RandomAgent(environment_instance)
+    elif agent_name == "QLearningAgent":
+        agent_instance = QLAgent(environment_instance)
 
     return agent_instance, environment_instance
+
 
 def display_agent_environment():
     st.header("Select an agent and an environment")
 
     agent_names = ["RandomAgent", "QLearningAgent"]
-    env_names = ["LunarLander-v2", "CartPole-v1"]
+    env_names = ["LunarLander-v2", "CartPole-v1", "Blackjack-v1", "MountainCarContinuous-v0"]
 
-    agent_name = st.sidebar.selectbox("Select an agent:", agent_names)
-    env_name = st.sidebar.selectbox("Select an environment:", env_names)
+    agent_name = st.selectbox("Select an agent:", agent_names, key="agent")
+    env_name = st.selectbox("Select an environment:", env_names, key="env")
 
     agent_instance, environment_instance = create_agent_environment(agent_name, env_name)
-    display_interactive_environment(agent_instance, environment_instance)
-    
-def display_interactive_environment(agent, environment):
-    try:
-        st.header("Interactive Environment Visualization")
 
-        experiment = comet.initialize_experiment()
-        experiment.log_parameter("Agent", str(agent))
-        experiment.log_parameter("Environment", str(environment))
+    if st.button("Run"):
+        try:
+            #probably use another function instead of hardcoding the loops here
+            
+            
+            agent_instance.set_environment(environment_instance)
+            num_episodes = 50  # set number of episodes manually
+            max_steps_per_episode = 500
 
-        agent.set_environment(environment)
-        for episode in range(environment.num_episodes):
-            state = environment.reset()
-            episode_reward = 0
+            frames = []
+            for episode in range(num_episodes):
+                state = environment_instance.reset()
+                done = False
+                total_reward = 0
+                step = 0
 
-            for step in range(environment.max_steps_per_episode):
-                action = agent.choose_action(state)
-                next_state, reward, truncated, terminated, info = environment.step(action)
-                done = truncated or terminated
-                episode_reward += reward
+                while not done:
+                    action = agent_instance.choose_action(state)
+                    observation, reward, terminated, truncated, info = environment_instance.step(action)
+                    agent_instance.learn((state, action, reward, observation, done))
+                    done = terminated or truncated
+                    state = observation
+                    total_reward += reward
+                    step += 1
 
-                agent.learn((next_state, reward, truncated, terminated, info))
+                    # Render the environment
+                    frame = environment_instance.render()
+                    frames.append(frame)
 
-                if done:
-                    break
+            # Save the frames as a video file
+            video_file = f"visualizations/videos/{agent_name}_{env_name}_video.mp4"
+            with imageio.get_writer(video_file, fps=30) as writer:
+                for frame in frames:
+                    writer.append_data(frame)
 
-                state = next_state
+            # Display the video file
+            st.video(video_file)
 
-            experiment.log_metric("Episode Reward", episode_reward, step=episode)
-
-        experiment.end()
-
-        environment.render_interactive()
-        
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
-        st.write(traceback.format_exc())
+        except Exception as e:
+            st.write(f"Interactive environment visualization failed with error: {e}")
 
 def display_gallery():
     st.header("Gallery")
@@ -216,6 +206,8 @@ def display_gallery():
     
     # Add images, plots, or videos of agent performances
     # ...
+    
+    
 def display_about():
     st.header("About")
     st.markdown("""

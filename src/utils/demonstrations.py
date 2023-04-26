@@ -31,6 +31,7 @@ def log_episode(experiment, episode, metrics, video_frames):
     if video_frames:
         images = [Image.fromarray(frame) for frame in video_frames]
         experiment.log_images(images, name="episode_video", step=episode)
+        
 def selector():
     # Get a list of all the demo functions in the current module
     members = inspect.getmembers(sys.modules[__name__])
@@ -40,59 +41,25 @@ def selector():
     # Add "Run all demos" to the beginning of the list
     demo_names.insert(0, "Run all demos")
 
-    st.write("Choose your demo:")
+    return demo_names
 
-    # Print available demos with numbered options
-    for i, name in enumerate(demo_names, start=1):
-        st.write(f"{i}. {name}")
+def demo_all():
+    # Get a list of all the demo functions in the current module
+    members = inspect.getmembers(sys.modules[__name__])
+    demo_funcs = [func for name, func in members if callable(func) and name.startswith("demo_")]
 
-    # Select demo(s) with arrow keys
-    selected_index = 0
-    while True:
-        # Wait for arrow key input
-        event = st.experimental_get_query_params().get("key")
-        if event == "ArrowDown":
-            selected_index = (selected_index + 1) % len(demo_names)
-            time.sleep(0.1)
-        elif event == "ArrowUp":
-            selected_index = (selected_index - 1) % len(demo_names)
-            time.sleep(0.1)
-        elif event == "Enter":
-            # Run selected demo(s)
-            if selected_index == 0:
-                # Run all demos
-                st.write("Running all demos...")
-                success = True
-                for i, func in enumerate(demo_funcs):
-                    st.write(f"Running demo {demo_names[i+1]}...")
-                    try:
-                        func()
-                        st.write(f"Demo {demo_names[i+1]} completed successfully.")
-                    except Exception as e:
-                        st.write(f"Demo {demo_names[i+1]} failed with error: {e}")
-                        success = False
-                        break
-            else:
-                # Run selected demo
-                func = demo_funcs[selected_index - 1]
-                st.write(f"Running demo {demo_names[selected_index]}...")
-                try:
-                    func()
-                    st.write(f"Demo {demo_names[selected_index]} completed successfully.")
-                except Exception as e:
-                    st.write(f"Demo {demo_names[selected_index]} failed with error: {e}")
-            return None
-        elif event == "Escape":
-            # Exit the function if escape key is pressed
-            st.write("Exiting selector.")
-            return None
-
-        # Print options with selection indicator
-        for i, name in enumerate(demo_names):
-            prefix = "->" if i == selected_index else "  "
-            st.write(f"{prefix} {i}. {name}")
-
-
+    success = True
+    for func in demo_funcs:
+        demo_name = func.__name__[5:].capitalize()
+        st.write(f"Running demo {demo_name}...")
+        try:
+            func()
+            st.write(f"Demo {demo_name} completed successfully.")
+        except Exception as e:
+            st.write(f"Demo {demo_name} failed with error: {e}")
+            success = False
+            break
+        
 def demo_tests():
     
     # Demonstrates the functionality and commands assosiated with the tests
