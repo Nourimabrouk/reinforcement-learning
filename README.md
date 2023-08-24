@@ -19,7 +19,6 @@ The project requires Python version 3.11.3 or later.
 
 The entry point of the project is `main.py`, which installs required packages, imports all modules in `src` and `configs`, and prints a simple output. To run the project, simply run the following command:
 
-pip install - requirements.txt
             
 ## License
 

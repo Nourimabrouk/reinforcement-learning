@@ -136,69 +136,9 @@ def display_demonstrations():
         else:
             st.write("Please select a demo to run.")
 
-def create_agent_environment(agent_name, env_name):
-    
-    environment_instance = gym.make(env_name, render_mode = "rgb_array")
-
-    if agent_name == "RandomAgent":
-        agent_instance = RandomAgent(environment_instance)
-    elif agent_name == "QLearningAgent":
-        agent_instance = QLAgent(environment_instance)
-
-    return agent_instance, environment_instance
-
 
 def display_agent_environment():
-    st.header("Select an agent and an environment")
-
-    agent_names = ["RandomAgent", "QLearningAgent"]
-    env_names = ["LunarLander-v2", "CartPole-v1", "Blackjack-v1", "MountainCarContinuous-v0"]
-
-    agent_name = st.selectbox("Select an agent:", agent_names, key="agent")
-    env_name = st.selectbox("Select an environment:", env_names, key="env")
-
-    agent_instance, environment_instance = create_agent_environment(agent_name, env_name)
-
-    if st.button("Run"):
-        try:
-            #probably use another function instead of hardcoding the loops here
-            
-            
-            agent_instance.set_environment(environment_instance)
-            num_episodes = 50  # set number of episodes manually
-            max_steps_per_episode = 500
-
-            frames = []
-            for episode in range(num_episodes):
-                state = environment_instance.reset()
-                done = False
-                total_reward = 0
-                step = 0
-
-                while not done:
-                    action = agent_instance.choose_action(state)
-                    observation, reward, terminated, truncated, info = environment_instance.step(action)
-                    agent_instance.learn((state, action, reward, observation, done))
-                    done = terminated or truncated
-                    state = observation
-                    total_reward += reward
-                    step += 1
-
-                    # Render the environment
-                    frame = environment_instance.render()
-                    frames.append(frame)
-
-            # Save the frames as a video file
-            video_file = f"visualizations/videos/{agent_name}_{env_name}_video.mp4"
-            with imageio.get_writer(video_file, fps=30) as writer:
-                for frame in frames:
-                    writer.append_data(frame)
-
-            # Display the video file
-            st.video(video_file)
-
-        except Exception as e:
-            st.write(f"Interactive environment visualization failed with error: {e}")
+   return
 
 def display_gallery():
     st.header("Gallery")
